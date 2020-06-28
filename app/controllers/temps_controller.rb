@@ -16,8 +16,8 @@ class TempsController < ApplicationController
   def getWeatherData
     @tempModel = Temp
 
-    response = RestClient.get(`http://api.worldweatheronline.com/premium/v1/past-weather.ashx?key=#{ENV["WEATHER_API_KEY"]}&q=30.404251,-97.849442&date=2020-06-01&enddate=2020-06-28&format=json
-    `, headers={})
+    response = RestClient.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?key=#{ENV['WEATHER_API_KEY']}&q=30.404251,-97.849442&date=2020-06-01&enddate=2020-06-28&format=json
+    ", headers={})
     jsonified_response = JSON.parse(response)
 
     @tempModel.postWeatherData(jsonified_response);
@@ -28,7 +28,7 @@ class TempsController < ApplicationController
     @tempModel = Temp
     current_date = DateTime.now.strftime "%Y-%m-%d"
     
-    response = RestClient.get("http://api.worldweatheronline.com/premium/v1/weather.ashx?key=#{ENV["WEATHER_API_KEY"]}&q=30.404251,-97.849442&num_of_days=3&extra=utcDateTime&format=json", headers={})
+    response = RestClient.get("http://api.worldweatheronline.com/premium/v1/weather.ashx?key=#{ENV['WEATHER_API_KEY']}&q=30.404251,-97.849442&num_of_days=3&extra=utcDateTime&format=json", headers={})
     jsonified_response = JSON.parse(response)
 
     # The model parses the returned object and extracts the relevant information then inseting said info into the the DB
@@ -48,6 +48,7 @@ class TempsController < ApplicationController
   end
 
   def index
+    self.getWeatherData
     @temps = Temp.last(25)
   end
 
