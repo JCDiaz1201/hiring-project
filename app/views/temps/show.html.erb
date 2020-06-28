@@ -1,0 +1,14 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Location:</strong>
+  <%= @temp.location %>
+</p>
+
+<p>
+  <strong>Temp:</strong>
+  <%= @temp.temp %>
+</p>
+
+<%= link_to 'Edit', edit_temp_path(@temp) %> |
+<%= link_to 'Back', temps_path %>

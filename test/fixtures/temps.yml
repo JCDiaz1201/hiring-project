@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  min: MyString
+  max: MyString
+  date: MyString
+  hours: MyString
+  forecast: MyString
+
+two:
+  min: MyString
+  max: MyString
+  date: MyString
+  hours: MyString
+  forecast: MyString
