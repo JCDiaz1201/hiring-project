@@ -48,7 +48,7 @@ class TempsController < ApplicationController
   end
 
   def index
-    self.getWeatherData
+    # self.getWeatherData
     @temps = Temp.last(25)
   end
 
