@@ -5,4 +5,5 @@ Rails.application.routes.draw do
 
   root :to => 'temps#index'
   post '/temps/updaterecords', to: 'temps#updateRecords'
+  post '/temps/populatedatabase', to: 'temps#populateDatabase'
 end

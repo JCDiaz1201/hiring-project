@@ -15,8 +15,9 @@ class TempsController < ApplicationController
   # This is the initial weather gathing function, backlogs historical data
   def getWeatherData
     @tempModel = Temp
+    current_date = Date.yesterday.strftime "%Y-%m-%d"
 
-    response = RestClient.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?key=#{ENV['WEATHER_API_KEY']}&q=30.404251,-97.849442&date=2020-06-01&enddate=2020-06-28&format=json
+    response = RestClient.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?key=#{ENV['WEATHER_API_KEY']}&q=30.404251,-97.849442&date=2020-06-01&enddate=#{current_date}&format=json
     ", headers={})
     jsonified_response = JSON.parse(response)
 
@@ -26,7 +27,6 @@ class TempsController < ApplicationController
   # This function pings the weather API for updates on the daily weather, called updateRecords() below
   def getWeatherInterval
     @tempModel = Temp
-    current_date = DateTime.now.strftime "%Y-%m-%d"
     
     response = RestClient.get("http://api.worldweatheronline.com/premium/v1/weather.ashx?key=#{ENV['WEATHER_API_KEY']}&q=30.404251,-97.849442&num_of_days=3&extra=utcDateTime&format=json", headers={})
     jsonified_response = JSON.parse(response)
@@ -38,6 +38,8 @@ class TempsController < ApplicationController
   # This function initially populates the database with pertinent data on app launch
   def populateDatabase
     self.getWeatherData()
+    @temps = Temp.last(25)
+    render json: @temps
   end
 
   # This function is invoked by an ajax request by application.js, returing the updated info from the newly minted data from the API request in getWeatherInterval()
@@ -48,8 +50,8 @@ class TempsController < ApplicationController
   end
 
   def index
-    # self.getWeatherData
     @temps = Temp.last(25)
+    # @temps = Temp.all
   end
 
   private

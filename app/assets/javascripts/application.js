@@ -11,10 +11,10 @@
 // about supported directives.
 //
 //= require jquery
-//= require jquery_ujs
 //= require turbolinks
 //= require_tree .
 //= require highstock
+//= require rails-ujs
 
 
 let plotOptionsObject = {
@@ -55,30 +55,8 @@ let annotationsSettings = [{
     }]
 }]
 
+let historicalTemps;
 
-function getRecordIntervalHalfHour() {
-    (function loop() {
-        let now = new Date();
-        if (now.getMinutes() === 30) {
-            $.ajax({
-                type: "get",
-                url: "/temps/",
-                dataType: "json",
-                success: function (result) {
-                    console.log(result)
-                },
-                error: function (x, e) {
-                    console.log(e)
-                }
-            })
-        }
-        now = new Date();                  // allow for time passing
-        let delay = 60000 - (now % 60000); // exact ms to next minute interval
-        setTimeout(loop, delay);
-    })();
-}
-
-// Update function for Chart One
 function updateTempsDaily(jsonData) {
     let historicalTemps = jsonData;
     let startDate = historicalTemps[0]["date"];
@@ -202,152 +180,57 @@ function updateTempsInterval(jsonData) {
 
 }
 
-// Update charts with both highs and lows chart and 3hr intervals daily
-// This can be converted into half hour intervals
-document.addEventListener('DOMContentLoaded',
-    function loop() {
-        let now = new Date();
-        if (now.getHours() === 8 && now.getMinutes() === 0 && now.getSeconds() === 0) {
+
+document.addEventListener('DOMContentLoaded', function cycle() {
+    let current = new Date();
+
+    // Update every day at 7am sharp
+    if (current.getHours() === 7 && current.getMinutes() === 0 && current.getSeconds() === 0) {
+        $.ajax({
+            type: "POST",
+            url: "/temps/updaterecords",
+            dataType: "json",
+            success: function (result) {
+                updateTempsDaily(result);
+                updateTempsInterval(result);
+            },
+            error: function (x, e) {
+                console.log(e);
+            }
+        })
+    }
+    current = new Date();                  // allow for time passing
+    let delay = 60000 - (current % 60000); // exact ms to next minute interval
+    setTimeout(cycle, delay);
+});
+
+$(document).ready(function () {
+    historicalTemps = $('.temp_information').data('temps');
+
+    if (historicalTemps[0] !== undefined) {
+        $("#populate_button").hide();
+        updateTempsDaily(historicalTemps);
+        updateTempsInterval(historicalTemps);
+    } else {
+        $("#populate_button").bind('click', function () {
+            $("#populate_button").hide();
+            event.preventDefault();
+            event.stopPropagation();
+            // Update function for Chart One
             $.ajax({
                 type: "POST",
-                url: "/temps/updaterecords",
+                url: "/temps/populatedatabase",
                 dataType: "json",
                 success: function (result) {
+                    // console.log(result);
                     updateTempsDaily(result);
                     updateTempsInterval(result);
                 },
                 error: function (x, e) {
                     console.log(e);
                 }
-            })
-        }
-        now = new Date();                  // allow for time passing
-        let delay = 60000 - (now % 60000); // exact ms to next minute interval
-        setTimeout(loop, delay);
+            });
+        });
     }
-);
-
-// Below are the original data fillers for the initial render
-// Highs and lows
-document.addEventListener('DOMContentLoaded', function () {
-    let historicalTemps = $('.temp_information').data('temps');
-    let temperatureData = [];
-    let startDate = $('.temp_information').data('temps')[0]["date"];
-
-    let forecastTemperatureData = []
-    let endDate = $('.temp_information').data('temps')[24]["date"];
-
-    startDate = startDate.split("-");
-    startDate.map((element) => {
-        startDate.push(parseInt(element));
-    });
-    startDate.splice(0, 3)
-
-    endDate = endDate.split("-");
-    endDate.map((element) => {
-        endDate.push(parseInt(element));
-    });
-    endDate.splice(0, 3)
-
-    if (historicalTemps[24]["forecast"] !== null) {
-        let forecastArrayIterable = JSON.parse(historicalTemps[24]["forecast"])
-        for (let a = 0; a < forecastArrayIterable.length; a++) {
-            forecastTemperatureData.push(parseInt(forecastArrayIterable[a]));
-        }
-    }
-    console.log(historicalTemps)
-
-    for (let a = 0; a < historicalTemps.length; a++) {
-        temperatureData.push(parseInt(historicalTemps[a]["min"]));
-        temperatureData.push(parseInt(historicalTemps[a]["max"]));
-    }
-
-    var firstChart = Highcharts.chart('chart-container-one', {
-        title: {
-            text: 'Big Commerce Campus Historical Highs and Lows'
-        },
-        chart: {
-            type: 'line',
-            zoomType: 'x'
-        },
-        yAxis: {
-            title: {
-                text: 'Temperature (°F)'
-            }
-        },
-        xAxis: {
-            type: 'datetime',
-            title: {
-                text: 'Dates'
-            }
-        },
-        plotOptions: plotOptionsObject,
-        series: [{
-            name: "Temperature",
-            type: 'area',
-            pointStart: Date.UTC(startDate[0], startDate[1] - 1, startDate[2]),
-            data: temperatureData,
-            pointInterval: 24 * 3600 * 1000 / 2 // one day
-        },
-        {
-            name: "Temperature -  Forecast",
-            type: 'area',
-            pointStart: Date.UTC(endDate[0], endDate[1] - 1, endDate[2] + 1),
-            data: forecastTemperatureData,
-            pointInterval: 24 * 3600 * 1000 / 2 // one day
-        }],
-        annotations: annotationsSettings
-    });
-});
-
-// Temperature intervals 
-document.addEventListener('DOMContentLoaded', function () {
-    let historicalTempsHr = $('.temp_information').data('temps');
-    let startDate = $('.temp_information').data('temps')[0]["date"];
-    let tempsArrayToIterate;
-    let tempsArray = [];
-
-    startDate = startDate.split("-");
-    startDate.map((element) => {
-        startDate.push(parseInt(element));
-    });
-    startDate.splice(0, 3)
-
-    for (let a = 0; a < historicalTempsHr.length; a++) {
-        tempsArrayToIterate = JSON.parse(historicalTempsHr[a]["hours"]);
-
-        for (let b = 0; b < tempsArrayToIterate.length; b++) {
-            tempsArray.push(parseInt(tempsArrayToIterate[b]));
-        }
-        tempsArrayToIterate = [];
-    }
-
-    let secondChart = Highcharts.chart('chart-container-two', {
-        chart: {
-            type: 'line',
-            zoomType: 'x'
-        },
-        title: {
-            text: 'Big Commerce Campus Historical 3 Hour Intervals'
-        },
-        xAxis: {
-            type: 'datetime'
-        },
-        plotOptions: plotOptionsObject,
-        yAxis: {
-            title: {
-                text: 'Temperature (°F)'
-            }
-        },
-        series: [{
-            name: "Temperature",
-            type: 'area',
-            pointStart: Date.UTC(startDate[0], startDate[1] - 1, startDate[2]),
-            data: tempsArray,
-            pointInterval: 24 * 3600 * 1000 / 8 // one day
-        }],
-        annotations: annotationsSettings
-    });
-
 });
 
