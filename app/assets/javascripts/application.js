@@ -16,6 +16,46 @@
 //= require_tree .
 //= require highstock
 
+
+let plotOptionsObject = {
+    area: {
+        fillColor: {
+            linearGradient: {
+                x1: 0,
+                y1: .1,
+                x2: 0,
+                y2: 1
+            },
+            stops: [
+                [0, Highcharts.getOptions().colors[3]],
+                [1, Highcharts.color(Highcharts.getOptions().colors[3]).setOpacity(0).get('rgba')]
+            ]
+        },
+        marker: {
+            radius: 2.5
+        },
+        lineWidth: 1.5,
+        states: {
+            hover: {
+                lineWidth: 1
+            }
+        },
+        threshold: null
+    }
+}
+
+let annotationsSettings = [{
+    labels: [{
+        point: 'max',
+        text: 'Max'
+    }, {
+        point: 'min',
+        text: 'Min',
+        backgroundColor: 'white'
+    }]
+}]
+
+
 function getRecordIntervalHalfHour() {
     (function loop() {
         let now = new Date();
@@ -41,20 +81,32 @@ function getRecordIntervalHalfHour() {
 // Update function for Chart One
 function updateTempsDaily(jsonData) {
     let historicalTemps = jsonData;
-    let temperatureDates = [];
-    let temperatureData = [];
     let startDate = historicalTemps[0]["date"];
+    let endDate = historicalTemps[24]["date"];
+
+    let temperatureData = [];
+    let forecastTemperatureData = [];
 
     startDate = startDate.split("-");
     startDate.map((element) => {
         startDate.push(parseInt(element));
     });
-
     startDate.splice(0, 3)
 
+    endDate = endDate.split("-");
+    endDate.map((element) => {
+        endDate.push(parseInt(element));
+    });
+    endDate.splice(0, 3)
+
+    if (historicalTemps[24]["forecast"] !== null) {
+        let forecastArrayIterable = JSON.parse(historicalTemps[24]["forecast"])
+        for (let a = 0; a < forecastArrayIterable.length; a++) {
+            forecastTemperatureData.push(parseInt(forecastArrayIterable[a]));
+        }
+    }
+
     for (let a = 0; a < historicalTemps.length; a++) {
-        temperatureDates.push("Low " + historicalTemps[a]["date"]);
-        temperatureDates.push("High " + historicalTemps[a]["date"]);
         temperatureData.push(parseInt(historicalTemps[a]["min"]));
         temperatureData.push(parseInt(historicalTemps[a]["max"]));
     }
@@ -78,48 +130,23 @@ function updateTempsDaily(jsonData) {
                 text: 'Dates'
             }
         },
-        plotOptions: {
-            area: {
-                fillColor: {
-                    linearGradient: {
-                        x1: 0,
-                        y1: .5,
-                        x2: 0,
-                        y2: 1
-                    },
-                    stops: [
-                        [0, Highcharts.getOptions().colors[0]],
-                        [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                    ]
-                },
-                marker: {
-                    radius: 2
-                },
-                lineWidth: 1,
-                states: {
-                    hover: {
-                        lineWidth: 1
-                    }
-                },
-                threshold: null
-            }
-        },
+        plotOptions: plotOptionsObject,
         series: [{
+            name: "Temperature",
             type: 'area',
             pointStart: Date.UTC(startDate[0], startDate[1] - 1, startDate[2]),
             data: temperatureData,
             pointInterval: 24 * 3600 * 1000 / 2 // one day
-        }],
-        annotations: [{
-            labels: [{
-                point: 'max',
-                text: 'Max'
-            }, {
-                point: 'min',
-                text: 'Min',
-                backgroundColor: 'white'
-            }]
-        }]
+        },
+        {
+            name: "Temperature -  Forecast",
+            type: 'area',
+            pointStart: Date.UTC(endDate[0], endDate[1] - 1, endDate[2] + 1),
+            data: forecastTemperatureData,
+            pointInterval: 24 * 3600 * 1000 / 2 // one day
+        }
+        ],
+        annotations: annotationsSettings
     });
 }
 
@@ -157,43 +184,20 @@ function updateTempsInterval(jsonData) {
         xAxis: {
             type: 'datetime'
         },
-        plotOptions: {
-            area: {
-                fillColor: {
-                    linearGradient: {
-                        x1: 0,
-                        y1: 0,
-                        x2: 0,
-                        y2: 1
-                    },
-                    stops: [
-                        [0, Highcharts.getOptions().colors[0]],
-                        [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                    ]
-                },
-                marker: {
-                    radius: 2
-                },
-                lineWidth: 1,
-                states: {
-                    hover: {
-                        lineWidth: 1
-                    }
-                },
-                threshold: null
-            }
-        },
+        plotOptions: plotOptionsObject,
         yAxis: {
             title: {
                 text: 'Temperature (°F)'
             }
         },
         series: [{
+            name: "Temperature",
             type: 'area',
             pointStart: Date.UTC(startDate[0], startDate[1] - 1, startDate[2]),
             data: tempsArray,
             pointInterval: 24 * 3600 * 1000 / 8 // one day
-        }]
+        }],
+        annotations: annotationsSettings
     });
 
 }
@@ -203,7 +207,7 @@ function updateTempsInterval(jsonData) {
 document.addEventListener('DOMContentLoaded',
     function loop() {
         let now = new Date();
-        if (now.getHours() === 8 && now.getMinutes() === 0) {
+        if (now.getHours() === 8 && now.getMinutes() === 0 && now.getSeconds() === 0) {
             $.ajax({
                 type: "POST",
                 url: "/temps/updaterecords",
@@ -227,22 +231,33 @@ document.addEventListener('DOMContentLoaded',
 // Highs and lows
 document.addEventListener('DOMContentLoaded', function () {
     let historicalTemps = $('.temp_information').data('temps');
-    let temperatureDates = [];
     let temperatureData = [];
     let startDate = $('.temp_information').data('temps')[0]["date"];
+
+    let forecastTemperatureData = []
+    let endDate = $('.temp_information').data('temps')[24]["date"];
 
     startDate = startDate.split("-");
     startDate.map((element) => {
         startDate.push(parseInt(element));
     });
-
     startDate.splice(0, 3)
 
+    endDate = endDate.split("-");
+    endDate.map((element) => {
+        endDate.push(parseInt(element));
+    });
+    endDate.splice(0, 3)
+
+    if (historicalTemps[24]["forecast"] !== null) {
+        let forecastArrayIterable = JSON.parse(historicalTemps[24]["forecast"])
+        for (let a = 0; a < forecastArrayIterable.length; a++) {
+            forecastTemperatureData.push(parseInt(forecastArrayIterable[a]));
+        }
+    }
+    console.log(historicalTemps)
 
     for (let a = 0; a < historicalTemps.length; a++) {
-        temperatureDates.push("Low " + historicalTemps[a]["date"]);
-        temperatureDates.push("High " + historicalTemps[a]["date"]);
-
         temperatureData.push(parseInt(historicalTemps[a]["min"]));
         temperatureData.push(parseInt(historicalTemps[a]["max"]));
     }
@@ -265,50 +280,23 @@ document.addEventListener('DOMContentLoaded', function () {
             title: {
                 text: 'Dates'
             }
-            // categories: temperatureDates
         },
-        plotOptions: {
-            area: {
-                fillColor: {
-                    linearGradient: {
-                        x1: 0,
-                        y1: .5,
-                        x2: 0,
-                        y2: 1
-                    },
-                    stops: [
-                        [0, Highcharts.getOptions().colors[0]],
-                        [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                    ]
-                },
-                marker: {
-                    radius: 2
-                },
-                lineWidth: 1,
-                states: {
-                    hover: {
-                        lineWidth: 1
-                    }
-                },
-                threshold: null
-            }
-        },
+        plotOptions: plotOptionsObject,
         series: [{
+            name: "Temperature",
             type: 'area',
             pointStart: Date.UTC(startDate[0], startDate[1] - 1, startDate[2]),
             data: temperatureData,
             pointInterval: 24 * 3600 * 1000 / 2 // one day
+        },
+        {
+            name: "Temperature -  Forecast",
+            type: 'area',
+            pointStart: Date.UTC(endDate[0], endDate[1] - 1, endDate[2] + 1),
+            data: forecastTemperatureData,
+            pointInterval: 24 * 3600 * 1000 / 2 // one day
         }],
-        annotations: [{
-            labels: [{
-                point: 'max',
-                text: 'Max'
-            }, {
-                point: 'min',
-                text: 'Min',
-                backgroundColor: 'white'
-            }]
-        }]
+        annotations: annotationsSettings
     });
 });
 
@@ -345,43 +333,20 @@ document.addEventListener('DOMContentLoaded', function () {
         xAxis: {
             type: 'datetime'
         },
-        plotOptions: {
-            area: {
-                fillColor: {
-                    linearGradient: {
-                        x1: 0,
-                        y1: 0,
-                        x2: 0,
-                        y2: 1
-                    },
-                    stops: [
-                        [0, Highcharts.getOptions().colors[0]],
-                        [1, Highcharts.color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
-                    ]
-                },
-                marker: {
-                    radius: 2
-                },
-                lineWidth: 1,
-                states: {
-                    hover: {
-                        lineWidth: 1
-                    }
-                },
-                threshold: null
-            }
-        },
+        plotOptions: plotOptionsObject,
         yAxis: {
             title: {
                 text: 'Temperature (°F)'
             }
         },
         series: [{
+            name: "Temperature",
             type: 'area',
             pointStart: Date.UTC(startDate[0], startDate[1] - 1, startDate[2]),
             data: tempsArray,
             pointInterval: 24 * 3600 * 1000 / 8 // one day
-        }]
+        }],
+        annotations: annotationsSettings
     });
 
 });

@@ -45,3 +45,5 @@ class Temp < ApplicationRecord
         )
     end
 end
+
+# record = Temp.create :date => "2020-06-28", :min => "70", :max => "93", :hours => "[\"77\", \"76\", \"76\", \"80\", \"82\", \"86\", \"83\", \"79\"]", :forecast => "[\"45\", \"65\", \"55\", \"79\"]"
