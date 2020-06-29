@@ -142,6 +142,7 @@ function updateTempsInterval(jsonData) {
         for (let b = 0; b < tempsArrayToIterate.length; b++) {
             tempsArray.push(parseInt(tempsArrayToIterate[b]));
         }
+
         tempsArrayToIterate = [];
     }
 
