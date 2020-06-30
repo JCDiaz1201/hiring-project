@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function dailyCycle() {
     let current = new Date();
 
     // Update every day at 8am sharp
-    if (current.getHours() === 8 && current.getMinutes() === 43 && current.getSeconds() === 0) {
+    if (current.getHours() === 8 && current.getMinutes() === 15 && current.getSeconds() === 0) {
         $.ajax({
             type: "POST",
             url: "/temps/updaterecords",
