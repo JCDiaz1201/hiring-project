@@ -49,6 +49,15 @@ class TempsController < ApplicationController
     render json: @temps
   end
 
+  # Below is controller call for half hourly data entry for historical data
+  def updateRecordsInterval
+    self.getWeatherInterval
+    # Attempt to retrive every 48th record for daily highs and lows chart
+    # @temps = Temp.find(:conditions => 'MOD(ROW_NUM,48) = 0') 
+    @temps = Temp.last(25)
+    render json: @temps
+  end
+
   def index
     @temps = Temp.last(25)
     # @temps = Temp.all
@@ -65,3 +74,4 @@ class TempsController < ApplicationController
       params.require(:temp).permit(:min, :max, :date)
     end
 end
+

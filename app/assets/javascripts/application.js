@@ -59,6 +59,7 @@ let historicalTemps;
 
 function updateTempsDaily(jsonData) {
     let historicalTemps = jsonData;
+    console.log(historicalTemps);
     let startDate = historicalTemps[0]["date"];
     let endDate = historicalTemps[24]["date"];
 
@@ -141,6 +142,8 @@ function updateTempsInterval(jsonData) {
     });
     startDate.splice(0, 3)
 
+    // console.log(historicalTempsHr);
+
     for (let a = 0; a < historicalTempsHr.length; a++) {
         tempsArrayToIterate = JSON.parse(historicalTempsHr[a]["hours"]);
 
@@ -181,11 +184,11 @@ function updateTempsInterval(jsonData) {
 }
 
 
-document.addEventListener('DOMContentLoaded', function cycle() {
+document.addEventListener('DOMContentLoaded', function dailyCycle() {
     let current = new Date();
 
-    // Update every day at 7am sharp
-    if (current.getHours() === 7 && current.getMinutes() === 0 && current.getSeconds() === 0) {
+    // Update every day at 8am sharp
+    if (current.getHours() === 8 && current.getMinutes() === 43 && current.getSeconds() === 0) {
         $.ajax({
             type: "POST",
             url: "/temps/updaterecords",
@@ -201,8 +204,32 @@ document.addEventListener('DOMContentLoaded', function cycle() {
     }
     current = new Date();                  // allow for time passing
     let delay = 60000 - (current % 60000); // exact ms to next minute interval
-    setTimeout(cycle, delay);
+    setTimeout(dailyCycle, delay);
 });
+
+//  Below is timer function for for half hourly data call
+// document.addEventListener('DOMContentLoaded', function halfHourlyCycle() {
+//     let current = new Date();
+//     // Update every day at 7am sharp
+//     if ((current.getMinutes() === 9 && current.getSeconds() === 0)
+//         || (current.getMinutes() === 59 && current.getSeconds() === 0)) {
+//         $.ajax({
+//             type: "POST",
+//             url: "/temps/updaterecordsinterval",
+//             dataType: "json",
+//             success: function (result) {
+//                 // updateTempsDaily(result);
+//                 updateTempsInterval(result);
+//             },
+//             error: function (x, e) {
+//                 console.log(e);
+//             }
+//         })
+//     }
+//     current = new Date();                  // allow for time passing
+//     let delay = 60000 - (current % 60000); // exact ms to next minute interval
+//     setTimeout(halfHourlyCycle, delay);
+// });
 
 $(document).ready(function () {
     historicalTemps = $('.temp_information').data('temps');
