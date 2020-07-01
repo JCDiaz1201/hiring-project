@@ -6,7 +6,8 @@ Rails.application.routes.draw do
   root :to => 'temps#index'
   post '/temps/updaterecords', to: 'temps#updateRecords'
   post '/temps/populatedatabase', to: 'temps#populateDatabase'
-  
+
   # Below is route for half hourly data entry for historical data
-  # post '/temps/updaterecordsinterval', to: 'temps#updateRecordsInterval'
+  post '/temps/updaterecordsinterval', to: 'temps#updateRecordsInterval'
+  post '/temps/updaterecordsintervalnew', to: 'temps#updateRecordsIntervalNew'
 end

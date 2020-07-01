@@ -38,29 +38,69 @@ class TempsController < ApplicationController
   # This function initially populates the database with pertinent data on app launch
   def populateDatabase
     self.getWeatherData()
-    @temps = Temp.last(25)
+    @temps = []
+    # Super hacky and kind of a bad practice but its the best I could come up with for the time being
+    Temp.all.each do |record|
+      if record.id % 47 == 0
+        @temps << record
+      end
+    end
     render json: @temps
   end
 
   # This function is invoked by an ajax request by application.js, returing the updated info from the newly minted data from the API request in getWeatherInterval()
   def updateRecords
+    # self.getWeatherInterval
+    @temps = []
+    # Super hacky and kind of a bad practice but its the best I could come up with for the time being
+    temps_from_db = Temp.last(1152)
+    temps_from_db.each do |record|
+      if record.id % 47 == 0
+        @temps << record
+      end
+    end
+
+    render json: @temps
+  end
+
+  def updateRecordsIntervalNew 
     self.getWeatherInterval
-    @temps = Temp.last(25)
+    @temps = []
+
+    temps_from_db = Temp.last(1152)
+    temps_from_db.each do |record|
+      if record.id % 6 == 0
+        @temps << record
+      end
+    end
     render json: @temps
   end
 
   # Below is controller call for half hourly data entry for historical data
   def updateRecordsInterval
-    self.getWeatherInterval
-    # Attempt to retrive every 48th record for daily highs and lows chart
-    # @temps = Temp.find(:conditions => 'MOD(ROW_NUM,48) = 0') 
-    @temps = Temp.last(25)
+    @temps = []
+    temps_from_db = Temp.last(1152)
+
+    temps_from_db.each do |record|
+      if record.id % 6 == 0
+        @temps << record
+        # puts record.id
+      end
+    end
     render json: @temps
   end
 
   def index
-    @temps = Temp.last(25)
-    # @temps = Temp.all
+    # @temps = Temp.last(25)
+    @temps = []
+    # Super hacky and kind of a bad practice but its the best I could come up with for the time being
+    temps_from_db = Temp.last(1152)
+    temps_from_db.each do |record|
+      if record.id % 47 == 0
+        @temps << record
+      end
+    end
+    @temps = @temps.to_json
   end
 
   private

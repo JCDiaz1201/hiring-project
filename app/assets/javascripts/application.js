@@ -59,9 +59,8 @@ let historicalTemps;
 
 function updateTempsDaily(jsonData) {
     let historicalTemps = jsonData;
-    console.log(historicalTemps);
     let startDate = historicalTemps[0]["date"];
-    let endDate = historicalTemps[24]["date"];
+    let endDate = historicalTemps[23]["date"];
 
     let temperatureData = [];
     let forecastTemperatureData = [];
@@ -78,8 +77,8 @@ function updateTempsDaily(jsonData) {
     });
     endDate.splice(0, 3)
 
-    if (historicalTemps[24]["forecast"] !== null) {
-        let forecastArrayIterable = JSON.parse(historicalTemps[24]["forecast"])
+    if (historicalTemps[23]["forecast"] !== null) {
+        let forecastArrayIterable = JSON.parse(historicalTemps[23]["forecast"])
         for (let a = 0; a < forecastArrayIterable.length; a++) {
             forecastTemperatureData.push(parseInt(forecastArrayIterable[a]));
         }
@@ -142,17 +141,10 @@ function updateTempsInterval(jsonData) {
     });
     startDate.splice(0, 3)
 
-    // console.log(historicalTempsHr);
-
     for (let a = 0; a < historicalTempsHr.length; a++) {
-        tempsArrayToIterate = JSON.parse(historicalTempsHr[a]["hours"]);
-
-        for (let b = 0; b < tempsArrayToIterate.length; b++) {
-            tempsArray.push(parseInt(tempsArrayToIterate[b]));
-        }
-
-        tempsArrayToIterate = [];
+        tempsArray.push(parseInt(historicalTempsHr[a]["hours"]));
     }
+
 
     let secondChart = Highcharts.chart('chart-container-two', {
         chart: {
@@ -186,16 +178,14 @@ function updateTempsInterval(jsonData) {
 
 document.addEventListener('DOMContentLoaded', function dailyCycle() {
     let current = new Date();
-
     // Update every day at 8am sharp
-    if (current.getHours() === 8 && current.getMinutes() === 15 && current.getSeconds() === 0) {
+    if (current.getHours() === 8 && current.getMinutes() === 0 && current.getSeconds() === 0) {
         $.ajax({
             type: "POST",
             url: "/temps/updaterecords",
             dataType: "json",
             success: function (result) {
                 updateTempsDaily(result);
-                updateTempsInterval(result);
             },
             error: function (x, e) {
                 console.log(e);
@@ -207,56 +197,84 @@ document.addEventListener('DOMContentLoaded', function dailyCycle() {
     setTimeout(dailyCycle, delay);
 });
 
-//  Below is timer function for for half hourly data call
-// document.addEventListener('DOMContentLoaded', function halfHourlyCycle() {
-//     let current = new Date();
-//     // Update every day at 7am sharp
-//     if ((current.getMinutes() === 9 && current.getSeconds() === 0)
-//         || (current.getMinutes() === 59 && current.getSeconds() === 0)) {
-//         $.ajax({
-//             type: "POST",
-//             url: "/temps/updaterecordsinterval",
-//             dataType: "json",
-//             success: function (result) {
-//                 // updateTempsDaily(result);
-//                 updateTempsInterval(result);
-//             },
-//             error: function (x, e) {
-//                 console.log(e);
-//             }
-//         })
-//     }
-//     current = new Date();                  // allow for time passing
-//     let delay = 60000 - (current % 60000); // exact ms to next minute interval
-//     setTimeout(halfHourlyCycle, delay);
-// });
+// Below is timer function for for half hourly data call
+document.addEventListener('DOMContentLoaded', function halfHourlyCycle() {
+    let currentInterval = new Date();
+    if ((currentInterval.getMinutes() === 0 && currentInterval.getSeconds() === 0) || (currentInterval.getMinutes() === 29 && currentInterval.getSeconds() === 0)) {
+        $.ajax({
+            type: "POST",
+            url: "/temps/updaterecordsintervalnew",
+            dataType: "json",
+            success: function (result) {
+                // updateTempsDaily(result);
+                updateTempsInterval(result);
+            },
+            error: function (x, e) {
+                console.log(e);
+            }
+        })
+    }
+    currentInterval = new Date();                  // allow for time passing
+    let delay = 60000 - (currentInterval % 60000); // exact ms to next minute interval
+    setTimeout(halfHourlyCycle, delay);
+});
 
 $(document).ready(function () {
     historicalTemps = $('.temp_information').data('temps');
 
     if (historicalTemps[0] !== undefined) {
         $("#populate_button").hide();
-        updateTempsDaily(historicalTemps);
-        updateTempsInterval(historicalTemps);
+        $.ajax({
+            type: "POST",
+            url: "/temps/updaterecords",
+            dataType: "json",
+            success: function (result) {
+                updateTempsDaily(result);
+            },
+            error: function (x, e) {
+                console.log(e);
+            }
+        })
+        $.ajax({
+            type: "POST",
+            url: "/temps/updaterecordsinterval",
+            dataType: "json",
+            success: function (result) {
+                updateTempsInterval(result);
+            },
+            error: function (x, e) {
+                console.log(e);
+            }
+        });
     } else {
+        // This function updates database with records then renders data to both charts
         $("#populate_button").bind('click', function () {
             $("#populate_button").hide();
             event.preventDefault();
             event.stopPropagation();
-            // Update function for Chart One
             $.ajax({
                 type: "POST",
                 url: "/temps/populatedatabase",
                 dataType: "json",
                 success: function (result) {
-                    // console.log(result);
                     updateTempsDaily(result);
-                    updateTempsInterval(result);
+                    $.ajax({
+                        type: "POST",
+                        url: "/temps/updaterecordsinterval",
+                        dataType: "json",
+                        success: function (result) {
+                            updateTempsInterval(result);
+                        },
+                        error: function (x, e) {
+                            console.log(e);
+                        }
+                    });
                 },
                 error: function (x, e) {
                     console.log(e);
                 }
             });
+
         });
     }
 });
