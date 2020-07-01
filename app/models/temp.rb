@@ -1,24 +1,19 @@
 class Temp < ApplicationRecord
     attr_accessor :postWeatherData, :postNewWeatherData
 
+    # This method is called every 30 minuted by the wheneverize gem to update the db records with the latest data
+    def self.getWeatherInterval
+        @tempModel = Temp
+        
+        response = RestClient.get("http://api.worldweatheronline.com/premium/v1/weather.ashx?key=#{ENV['WEATHER_API_KEY']}&q=30.404251,-97.849442&num_of_days=3&extra=utcDateTime&format=json", headers={})
+        jsonified_response = JSON.parse(response)
+    
+        # The model parses the returned object and extracts the relevant information then inseting said info into the the DB
+        self.postNewWeatherData(jsonified_response);
+    end
+
     # Initial data fromt the past does not include forecast
     def self.postWeatherData(data)
-        # hourly_array = Array.new
-
-        # data['data']['weather'].each do |item|
-        #     item["hourly"].each do |hourlyObject|
-        #         hourly_array.push(hourlyObject["tempF"])
-        #     end
-
-        #     Temp.create(
-        #         date: item["date"], 
-        #         min: item["mintempF"], 
-        #         max: item["maxtempF"], 
-        #         hours: hourly_array
-        #     )
-        #     hourly_array = []
-        # end
-        # Below is theortical framework for half hourly data entry for historical data
         data['data']['weather'].each do |item|
             item["hourly"].each do |hourlyObject|
                 6.times {
@@ -26,7 +21,9 @@ class Temp < ApplicationRecord
                         date: item["date"], 
                         min: item["mintempF"], 
                         max: item["maxtempF"], 
-                        hours: hourlyObject["tempF"]
+                        hours: hourlyObject["tempF"],
+                        # A dummy forecast was created to seed the deployed version 
+                        forecast: [75, 98, 74, 100]
                     )
                 }
             end
@@ -46,10 +43,6 @@ class Temp < ApplicationRecord
         forecast_array.push(data['data']['weather'][2]["mintempF"])
         forecast_array.push(data['data']['weather'][2]["maxtempF"])
 
-        # data['data']['weather'][0]["hourly"].each do |hourlyObject|
-        #     hourly_array.push(hourlyObject["tempF"])
-        # end
-
         Temp.create(
             date: data['data']['weather'][0]["date"], 
             min: data['data']['weather'][0]["mintempF"], 
@@ -59,5 +52,3 @@ class Temp < ApplicationRecord
         )
     end
 end
-
-# record = Temp.create :date => "2020-06-29", :min => "70", :max => "93", :hours => "[\"45\"]", :forecast => "[\"45\", \"65\", \"55\", \"79\"]"

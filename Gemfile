@@ -31,6 +31,8 @@ gem 'rest-client'
 gem 'json', '~> 1.8', '>= 1.8.3'
 # JSON gem, for testing purposes
 
+gem 'whenever', require: false
+
 gem 'highstock-rails'
 # Highstock gem to render elegant maps with data
 

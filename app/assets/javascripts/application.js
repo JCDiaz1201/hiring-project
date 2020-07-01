@@ -57,6 +57,7 @@ let annotationsSettings = [{
 
 let historicalTemps;
 
+// Update function for Chart One
 function updateTempsDaily(jsonData) {
     let historicalTemps = jsonData;
     let startDate = historicalTemps[0]["date"];
@@ -192,15 +193,8 @@ document.addEventListener('DOMContentLoaded', function dailyCycle() {
             }
         })
     }
-    current = new Date();                  // allow for time passing
-    let delay = 60000 - (current % 60000); // exact ms to next minute interval
-    setTimeout(dailyCycle, delay);
-});
-
-// Below is timer function for for half hourly data call
-document.addEventListener('DOMContentLoaded', function halfHourlyCycle() {
-    let currentInterval = new Date();
-    if ((currentInterval.getMinutes() === 0 && currentInterval.getSeconds() === 0) || (currentInterval.getMinutes() === 29 && currentInterval.getSeconds() === 0)) {
+    // Pull results at every hour on the hour, and every half hour
+    if ((current.getMinutes() === 0) || (current.getMinutes() === 30)) {
         $.ajax({
             type: "POST",
             url: "/temps/updaterecordsintervalnew",
@@ -214,21 +208,23 @@ document.addEventListener('DOMContentLoaded', function halfHourlyCycle() {
             }
         })
     }
-    currentInterval = new Date();                  // allow for time passing
-    let delay = 60000 - (currentInterval % 60000); // exact ms to next minute interval
-    setTimeout(halfHourlyCycle, delay);
+    current = new Date();                  // allow for time passing
+    let delay = 60000 - (current % 60000); // exact ms to next minute interval
+    setTimeout(dailyCycle, delay);
 });
 
 $(document).ready(function () {
     historicalTemps = $('.temp_information').data('temps');
 
     if (historicalTemps[0] !== undefined) {
+
         $("#populate_button").hide();
         $.ajax({
             type: "POST",
             url: "/temps/updaterecords",
             dataType: "json",
             success: function (result) {
+                console.log(result);
                 updateTempsDaily(result);
             },
             error: function (x, e) {
