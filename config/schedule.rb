@@ -22,4 +22,3 @@
 every 30.minutes do
     runner "Temp.getWeatherInterval"
 end
-
