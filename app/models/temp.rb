@@ -29,7 +29,7 @@ class Temp < ApplicationRecord
             end
         end
     end
-
+    
     # Since original data from the past does not include forecast data,
     # all subsequent data gathered from interval and daily function calls
     # will be parsed by the following function allowing for a forecast record to be kept

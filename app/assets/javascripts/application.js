@@ -142,7 +142,7 @@ function updateTempsInterval(jsonData) {
     });
     startDate.splice(0, 3)
 
-    for (let a = 0; a < historicalTempsHr.length; a++) {
+    for (let a = 0; a < (historicalTempsHr.length - 8); a++) {
         tempsArray.push(parseInt(historicalTempsHr[a]["hours"]));
     }
 
@@ -195,6 +195,7 @@ document.addEventListener('DOMContentLoaded', function dailyCycle() {
     }
     // Pull results at every hour on the hour, and every half hour
     if ((current.getMinutes() === 0) || (current.getMinutes() === 30)) {
+        console.log("We here");
         $.ajax({
             type: "POST",
             url: "/temps/updaterecordsintervalnew",

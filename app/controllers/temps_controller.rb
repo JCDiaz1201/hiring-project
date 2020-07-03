@@ -6,7 +6,7 @@ class TempsController < ApplicationController
   # This is the initial weather gathing function, backlogs historical data
   def getWeatherData
     @tempModel = Temp
-    current_date = Date.today.strftime "%Y-%m-%d"
+    current_date = Date.yesterday.strftime "%Y-%m-%d"
 
     response = RestClient.get("http://api.worldweatheronline.com/premium/v1/past-weather.ashx?key=#{ENV['WEATHER_API_KEY']}&q=30.404251,-97.849442&date=2020-06-01&enddate=#{current_date}&format=json
     ", headers={})
