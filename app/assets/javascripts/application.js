@@ -130,11 +130,10 @@ function updateTempsDaily(jsonData) {
 
 // Update function for Chart Two 
 function updateTempsInterval(jsonData) {
+    console.log(jsonData);
     let historicalTempsHr = jsonData;
     let startDate = historicalTempsHr[0]["date"]
-    let tempsArrayToIterate;
     let tempsArray = [];
-    let num;
 
     startDate = startDate.split("-");
     startDate.map((element) => {
@@ -175,38 +174,42 @@ function updateTempsInterval(jsonData) {
 
 }
 
+function updateTempsDailyAJAXCall() {
+    return $.ajax({
+        type: "POST",
+        url: "/temps/updaterecords",
+        dataType: "json",
+        success: function (result) {
+            updateTempsDaily(result);
+        },
+        error: function (x, e) {
+            console.log(e);
+        }
+    })
+}
+
+function updaterecordsintervalAJAXCall() {
+    return $.ajax({
+        type: "POST",
+        url: "/temps/updaterecordsinterval",
+        dataType: "json",
+        success: function (result) {
+            updateTempsInterval(result);
+        },
+        error: function (x, e) {
+            console.log(e);
+        }
+    })
+}
+
 
 document.addEventListener('DOMContentLoaded', function dailyCycle() {
     let current = new Date();
 
-    // Update every day at 8am sharp
-    if ((current.getMinutes() === 0) || (current.getMinutes() === 30)) {
-        $.ajax({
-            type: "POST",
-            url: "/temps/updaterecords",
-            dataType: "json",
-            success: function (result) {
-                updateTempsDaily(result);
-            },
-            error: function (x, e) {
-                console.log(e);
-            }
-        })
-    }
     // Pull results at every hour on the hour, and every half hour
-    if ((current.getMinutes() === 0) || (current.getMinutes() === 30)) {
-        $.ajax({
-            type: "POST",
-            url: "/temps/updaterecordsintervalnew",
-            dataType: "json",
-            success: function (result) {
-                // updateTempsDaily(result);
-                updateTempsInterval(result);
-            },
-            error: function (x, e) {
-                console.log(e);
-            }
-        })
+    if ((current.getMinutes() === 0) || (current.getMinutes() === 42)) {
+        updateTempsDailyAJAXCall()
+        updaterecordsintervalAJAXCall()
     }
     current = new Date();                  // allow for time passing
     let delay = 60000 - (current % 60000); // exact ms to next minute interval
@@ -217,30 +220,10 @@ $(document).ready(function () {
     historicalTemps = $('.temp_information').data('temps');
 
     if (historicalTemps[0] !== undefined) {
-
         $("#populate_button").hide();
-        $.ajax({
-            type: "POST",
-            url: "/temps/updaterecords",
-            dataType: "json",
-            success: function (result) {
-                updateTempsDaily(result);
-            },
-            error: function (x, e) {
-                console.log(e);
-            }
-        })
-        $.ajax({
-            type: "POST",
-            url: "/temps/updaterecordsinterval",
-            dataType: "json",
-            success: function (result) {
-                updateTempsInterval(result);
-            },
-            error: function (x, e) {
-                console.log(e);
-            }
-        });
+        updateTempsDailyAJAXCall()
+        updaterecordsintervalAJAXCall()
+
     } else {
         // This function updates database with records then renders data to both charts
         $("#populate_button").bind('click', function () {
@@ -253,17 +236,7 @@ $(document).ready(function () {
                 dataType: "json",
                 success: function (result) {
                     updateTempsDaily(result);
-                    $.ajax({
-                        type: "POST",
-                        url: "/temps/updaterecordsinterval",
-                        dataType: "json",
-                        success: function (result) {
-                            updateTempsInterval(result);
-                        },
-                        error: function (x, e) {
-                            console.log(e);
-                        }
-                    });
+                    updaterecordsintervalAJAXCall()
                 },
                 error: function (x, e) {
                     console.log(e);
