@@ -16,7 +16,6 @@
 //= require highstock
 //= require rails-ujs
 
-
 let plotOptionsObject = {
     area: {
         fillColor: {
@@ -135,6 +134,7 @@ function updateTempsInterval(jsonData) {
     let startDate = historicalTempsHr[0]["date"]
     let tempsArrayToIterate;
     let tempsArray = [];
+    let num;
 
     startDate = startDate.split("-");
     startDate.map((element) => {
@@ -142,10 +142,9 @@ function updateTempsInterval(jsonData) {
     });
     startDate.splice(0, 3)
 
-    for (let a = 0; a < (historicalTempsHr.length - 8); a++) {
+    for (let a = 0; a < (historicalTempsHr.length - 0); a++) {
         tempsArray.push(parseInt(historicalTempsHr[a]["hours"]));
     }
-
 
     let secondChart = Highcharts.chart('chart-container-two', {
         chart: {
@@ -179,8 +178,9 @@ function updateTempsInterval(jsonData) {
 
 document.addEventListener('DOMContentLoaded', function dailyCycle() {
     let current = new Date();
+
     // Update every day at 8am sharp
-    if (current.getHours() === 8 && current.getMinutes() === 0 && current.getSeconds() === 0) {
+    if ((current.getMinutes() === 0) || (current.getMinutes() === 30)) {
         $.ajax({
             type: "POST",
             url: "/temps/updaterecords",
@@ -195,7 +195,6 @@ document.addEventListener('DOMContentLoaded', function dailyCycle() {
     }
     // Pull results at every hour on the hour, and every half hour
     if ((current.getMinutes() === 0) || (current.getMinutes() === 30)) {
-        console.log("We here");
         $.ajax({
             type: "POST",
             url: "/temps/updaterecordsintervalnew",
@@ -225,7 +224,6 @@ $(document).ready(function () {
             url: "/temps/updaterecords",
             dataType: "json",
             success: function (result) {
-                console.log(result);
                 updateTempsDaily(result);
             },
             error: function (x, e) {
